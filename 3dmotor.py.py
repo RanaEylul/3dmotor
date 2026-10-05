@@ -75,9 +75,9 @@ html_content = """<!DOCTYPE html>
             const loader = new GLTFLoader();
             const loadingElement = document.getElementById('loading');
 
-            // Modelinizin yolunu buraya yazın (Örn: './model.glb' veya GitHub Raw linki)
+            // Modelinizin yolunu buraya yazın (Örn: './car engine 3d model.glb')
             loader.load(
-                'modelin_adi.glb', // <-- Kendi dosya yolunuzla veya adıyla değiştirin
+                'car engine 3d model.glb', // <-- İsteğinize göre güncellendi
                 function (gltf) {
                     const model = gltf.scene;
                     
@@ -114,7 +114,7 @@ html_content = """<!DOCTYPE html>
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update(); // Kontrollerin dampig özelliğinin çalışması için gerekli
+            controls.update(); // Kontrollerin damping özelliğinin çalışması için gerekli
             renderer.render(scene, camera);
         }
 
