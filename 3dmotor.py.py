@@ -49,7 +49,7 @@ if os.path.exists(glb_path):
     with open(glb_path, "rb") as f:
         glb_b64 = base64.b64encode(f.read()).decode()
 
-html_code = f"""
+html_code = f""
 <!DOCTYPE html>
 <html>
 <head>
