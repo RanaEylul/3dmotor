@@ -3,36 +3,118 @@ import streamlit.components.v1 as components
 import base64
 import os
 
-st.set_page_config(page_title="3D Araba Motoru Simulasyonu", layout="wide")
+st.set_page_config(page_title="3D Araba Motoru", layout="wide")
 
-# PREMIUM ARAYUZ - kenar 0 ama guzel detaylar
+# === ISTEDIKLERIN ===
+# 1. Kenar bosluk 0
+# 2. Baslik var
+# 3. Arka plan 1 tik acik + guzel detaylar
 st.markdown("""
 <style>
-.block-container {padding-top: 0.5rem !important; padding-bottom: 0 !important; padding-left: 0 !important; padding-right: 0 !important; max-width: 100% !important;}
-header {visibility: hidden;}
-footer {visibility: hidden;}
-.stApp {background: radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 40%, #020617 100%) !important;}
-.title-box {
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 14px 20px;
-  margin: 12px 16px;
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
+.block-container {
+  padding: 0rem 0rem 0rem 0rem !important;
+  max-width: 100% !important;
 }
-.title-box h2 {margin:0 !important; color:#f1f5f9; font-size:22px; letter-spacing:0.5px}
-.badge {background: linear-gradient(135deg, #38bdf8, #818cf8); color:white; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600}
-.info-bar {text-align:center; color:#94a3b8; font-size:13px; margin: 0 0 12px 0; letter-spacing:0.3px}
+header, footer {visibility: hidden; height:0;}
+.stApp {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
+# Baslik ve detaylar - sen istedin
 st.markdown("""
-<div class="title-box">
-  <h2>🚗 İnteraktif 3D Motor Simülasyonu</h2>
-  <div class="badge">GLB • Real-time • Trackpad destekli</div>
+<div style="
+  margin: 0; 
+  padding: 16px 24px 12px 24px; 
+  background: rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <h2 style="margin:0; color:#f8fafc; font-weight:700; letter-spacing:0.5px;">🚗 İnteraktif 3D Araba Motoru</h2>
+      <p style="margin:4px 0 0 0; color:#94a3b8; font-size:13px;">Trackpad ve fare ile tam kontrol • Gerçek zamanlı render</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="background:#0ea5e9; color:white; padding:6px 12px; border-radius:20px; font-size:11px; font-weight:700;">LIVE 3D</span>
+      <span style="background:rgba(255,255,255,0.1); color:#cbd5e1; padding:6px 12px; border-radius:20px; font-size:11px;">motor-v2.glb</span>
+    </div>
+  </div>
 </div>
-<p class="info-bar">🖱️ Sürükle = Döndür &nbsp;|&nbsp; 🔍 Tekerlek = Zoom &nbsp;|&nbsp; 👆 İki parmak = Kaydır</p>
-""", unsafe_allow
+<div style="text-align:center; padding:8px; background: rgba(0,0,0,0.2); color:#64748b; font-size:12px;">
+  🖱️ Sürükle = Döndür &nbsp;&nbsp; 🔍 Tekerlek = Zoom &nbsp;&nbsp; 👆 Sağ tık = Kaydır &nbsp;&nbsp; ⏯️ Otomatik dönüyor
+</div>
+""", unsafe_allow_html=True)
+
+POSSIBLE_NAMES = ["motor-v2.glb", "motor.glb", "engine.glb"]
+glb_b64 = ""
+found_file = None
+for name in POSSIBLE_NAMES:
+    if os.path.exists(name) and os.path.getsize(name) > 1000:
+        found_file = name
+        with open(name, "rb") as f:
+            glb_b64 = base64.b64encode(f.read()).decode()
+        break
+
+html_template = f'''
+<!DOCTYPE html>
+<html>
+<head>
+<script type="importmap">
+{{"imports":{{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}}}
+</script>
+<style>
+  html, body {{margin:0; padding:0; overflow:hidden; background: #1e293b; width:100%; height:100%}}
+  #c {{width:100vw; height:calc(100vh - 95px); display:block}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import {{OrbitControls}} from 'three/addons/controls/OrbitControls.js';
+import {{GLTFLoader}} from 'three/addons/loaders/GLTFLoader.js';
+import {{DRACOLoader}} from 'three/addons/loaders/DRACOLoader.js';
+
+const scene = new THREE.Scene();
+// ARKA PLANI 1 TIK ACIK YAPTIM - #0a0a0a degil artik #1e293b
+scene.background = new THREE.Color(0x1e293b);
+
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth/(window.innerHeight-95), 0.1, 100);
+camera.position.set(1.6, 0.9, 1.6);
+
+const renderer = new THREE.WebGLRenderer({{canvas:document.getElementById('c'), antialias:true, alpha:true}});
+renderer.setSize(window.innerWidth, window.innerHeight-95);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.toneMappingExposure = 1.1;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.minDistance = 0.5;
+controls.maxDistance = 8;
+
+// ISIKLAR - acik arka plan icin guclendirildi
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+const d1 = new THREE.DirectionalLight(0xffffff, 2.0); d1.position.set(5,10,5); d1.castShadow=true; scene.add(d1);
+const d2 = new THREE.DirectionalLight(0xffffff, 0.9); d2.position.set(-5,4,-3); scene.add(d2);
+const d3 = new THREE.DirectionalLight(0xffffff, 0.5); d3.position.set(0,-5,2); scene.add(d3);
+
+// GUZEL DETAY - hafif zemin + grid
+const grid = new THREE.GridHelper(6, 12, 0x334155, 0x1e293b);
+grid.position.y = -0.8;
+grid.material.opacity = 0.3;
+grid.material.transparent = true;
+scene.add(grid);
+
+const engineGroup = new THREE.Group();
+scene.add(engineGroup);
+
+function loadFromBase64(b64){{
+  if(!b64 || b64.length < 10) return;
+ 
