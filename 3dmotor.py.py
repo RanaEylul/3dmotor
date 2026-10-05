@@ -1,15 +1,23 @@
-html_content = """<!DOCTYPE html>
+import streamlit as st
+import streamlit.components.v1 as components
+
+# Sayfa ayarları
+st.set_page_config(page_title="3D Model Görüntüleyici", layout="centered")
+
+st.title("🚗 3D Araba Motoru Modeli")
+st.write("Streamlit ve Python ile yüklenen GLB 3D model görüntüleyici.")
+
+# Three.js kullanan HTML/JavaScript arayüzü
+# Not: car engine 3d model.glb dosyan GitHub reposunda (genellikle ana dizinde veya static klasöründe) olmalıdır.
+streamlit_html = """
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js GLTF Model Yükleme</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #1a1a1a;
-        }
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; }
+        #canvas-container { width: 100%; height: 500px; }
         #loading {
             position: absolute;
             top: 50%;
@@ -17,16 +25,15 @@ html_content = """<!DOCTYPE html>
             transform: translate(-50%, -50%);
             color: white;
             font-family: Arial, sans-serif;
-            font-size: 20px;
+            font-size: 16px;
             pointer-events: none;
         }
     </style>
 </head>
 <body>
-
     <div id="loading">Model Yükleniyor...</div>
+    <div id="canvas-container"></div>
 
-    <!-- Three.js ve Eklentilerini ES Modülü Olarak Çağrılması -->
     <script type="importmap">
         {
             "imports": {
@@ -41,91 +48,70 @@ html_content = """<!DOCTYPE html>
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-        let scene, camera, renderer, controls;
+        const container = document.getElementById('canvas-container');
+        const loadingElement = document.getElementById('loading');
 
-        function init() {
-            // 1. Sahne (Scene) Oluşturma
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x222222);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
 
-            // 2. Kamera (Camera) Oluşturma
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 5);
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 2, 5);
 
-            // 3. Renderer (Görüntüleyici) Oluşturma
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.shadowMap.enabled = true;
-            document.body.appendChild(renderer.domElement);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
 
-            // 4. Fare Kontrolleri (OrbitControls)
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; // Daha yumuşak hareket için
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
 
-            // 5. Işıklandırma (Modelin karanlık görünmemesi için çok önemlidir)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Genel ortam ışığı
-            scene.add(ambientLight);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+        scene.add(ambientLight);
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5); // Güneş ışığı etkisi
-            directionalLight.position.set(5, 10, 7);
-            scene.add(directionalLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+        directionalLight.position.set(5, 10, 7);
+        scene.add(directionalLight);
 
-            // 6. GLTF Modelini Yükleme
-            const loader = new GLTFLoader();
-            const loadingElement = document.getElementById('loading');
-
-            // Modelinizin yolunu buraya yazın (Örn: './car engine 3d model.glb')
-            loader.load(
-                'car engine 3d model.glb', // <-- İsteğinize göre güncellendi
-                function (gltf) {
-                    const model = gltf.scene;
-                    
-                    // Modelin boyutunu veya konumunu ayarlamak isterseniz:
-                    // model.scale.set(1, 1, 1);
-                    // model.position.set(0, 0, 0);
-
-                    scene.add(model);
-                    loadingElement.style.display = 'none'; // Yüklenince yazıyı kaldır
-                    console.log('Model başarıyla yüklendi!');
-                },
-                function (xhr) {
-                    // Yükleme ilerleme yüzdesi
-                    const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
-                    if(!isNaN(percent)) {
-                        loadingElement.innerText = `Yükleniyor: %${percent}`;
-                    }
-                },
-                function (error) {
-                    console.error('Model yüklenirken hata oluştu:', error);
-                    loadingElement.innerText = 'Model yüklenemedi! Konsolu kontrol edin.';
+        const loader = new GLTFLoader();
+        
+        // GitHub'daki GLB dosyanın yolu (Aynı dizindeyse doğrudan adını yazabilirsin)
+        loader.load(
+            'car engine 3d model.glb',
+            function (gltf) {
+                scene.add(gltf.scene);
+                loadingElement.style.display = 'none';
+            },
+            function (xhr) {
+                const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
+                if (!isNaN(percent)) {
+                    loadingElement.innerText = `Yükleniyor: %${percent}`;
                 }
-            );
+            },
+            function (error) {
+                console.error('Hata:', error);
+                loadingElement.innerText = 'Model yüklenemedi! Dosya yolunu kontrol edin.';
+            }
+        );
 
-            // Pencere Boyutu Değiştiğinde Tepki Verme
-            window.addEventListener('resize', onWindowResize);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update(); // Kontrollerin damping özelliğinin çalışması için gerekli
+            controls.update();
             renderer.render(scene, camera);
         }
-
-        init();
         animate();
     </script>
 </body>
 </html>
 """
 
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
+# HTML kodunu Streamlit bileşeni olarak ekrana basıyoruz
+components.html(streamlit_html, height=520)
 
-print("index.html başarıyla oluşturuldu!")
+st.markdown("---")
+st.info("İpucu: Mouse sol tuşu ile modeli döndürebilir, sağ tuş ile kaydırabilir ve tekerlekle yakınlaşabilirsiniz.")
