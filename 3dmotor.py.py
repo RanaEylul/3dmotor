@@ -34,7 +34,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 class='main-title'>🚗 İnteraktif 3D Araba Motoru Simülasyonu</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>Model boyutu büyütüldü ve ekrana yakınlaştırıldı.</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>Laptop trackpad (iki parmak) ve fare tekerleği desteği aktifleştirildi.</p>", unsafe_allow_html=True)
 
 # Three.js kullanan HTML/JavaScript arayüzü
 streamlit_html = """
@@ -88,36 +88,7 @@ streamlit_html = """
             backdrop-filter: blur(6px);
             line-height: 1.5;
             z-index: 5;
-        }
-        /* Yakınlaşma / Uzaklaşma Butonları */
-        .zoom-buttons {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 5;
-        }
-        .zoom-btn {
-            background: rgba(0, 173, 181, 0.8);
-            color: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            font-size: 22px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .zoom-btn:hover {
-            background: rgba(0, 173, 181, 1);
-            transform: scale(1.05);
+            pointer-events: none;
         }
     </style>
 </head>
@@ -126,15 +97,9 @@ streamlit_html = """
     <div id="canvas-container">
         <!-- Bilgilendirme Paneli -->
         <div class="control-panel">
-            🖱️ <b>Sol Tık + Sürükle:</b> Modeli Döndür<br>
-            🔍 <b>Fare Tekerleği veya Sağdaki Butonlar:</b> Yakınlaş / Uzaklaş<br>
-            ✋ <b>Sağ Tık + Sürükle:</b> Konumu Kaydır
-        </div>
-
-        <!-- Ekrana Eklenen Yakınlaştır / Uzaklaştır Butonları -->
-        <div class="zoom-buttons">
-            <button class="zoom-btn" id="btn-in" title="Yakınlaştır">+</button>
-            <button class="zoom-btn" id="btn-out" title="Uzaklaştır">-</button>
+            🖱️ <b>Tek Parmak / Sol Tık:</b> Modeli Döndür<br>
+            💻 <b>Trackpad (İki Parmak Kaydırma) veya Fare Tekerleği:</b> Yakınlaş / Uzaklaş<br>
+            ✋ <b>İki Parmakla Sürükleme / Sağ Tık:</b> Konumu Kaydır
         </div>
     </div>
 
@@ -160,7 +125,7 @@ streamlit_html = """
 
         const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
         
-        // Kamera modele çok daha yakın konumlandırıldı
+        # Kamerayı modele yakın konumda başlatıyoruz
         camera.position.set(0, 1.2, 2.5);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -172,16 +137,9 @@ streamlit_html = """
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
 
-        // Butonlar ile yakınlaştırma / uzaklaştırma mantığı
-        document.getElementById('btn-in').addEventListener('click', () => {
-            controls.dollyIn(1.2);
-            controls.update();
-        });
-
-        document.getElementById('btn-out').addEventListener('click', () => {
-            controls.dollyOut(1.2);
-            controls.update();
-        });
+        // --- LAPTOP TRACKPAD VE ZOOM HASSASİYET AYARLARI ---
+        controls.zoomSpeed = 1.2; // Yakınlaşma hızını artırdık
+        controls.screenSpacePanning = true;
 
         // Işıklandırma
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
