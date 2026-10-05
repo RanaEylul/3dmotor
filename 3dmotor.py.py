@@ -1,13 +1,43 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Sayfa ayarları
-st.set_page_config(page_title="3D Model Görüntüleyici", layout="centered")
+# Sayfa ayarlarını geniş ekran (wide) yapıyoruz
+st.set_page_config(
+    page_title="3D Araba Motoru Görüntüleyici",
+    page_icon="🚗",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-st.title("🚗 3D Araba Motoru Modeli")
-st.write("Streamlit ve Python ile yüklenen GLB 3D model görüntüleyici.")
+# Özel CSS ile arayüzü şıklaştırıyoruz (Karanlık tema & modern başlıklar)
+st.markdown("""
+    <style>
+        .stApp {
+            background-color: #0e1117;
+            color: #ffffff;
+        }
+        .main-title {
+            font-family: 'Helvetica Neue', sans-serif;
+            font-weight: 700;
+            color: #00adb5;
+            text-align: center;
+            margin-bottom: 0px;
+            font-size: 2.5rem;
+        }
+        .sub-title {
+            text-align: center;
+            color: #a3a3a3;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# Three.js kullanan HTML/JavaScript arayüzü
+# Şık Başlık Alanı
+st.markdown("<h1 class='main-title'>🚗 İnteraktif 3D Araba Motoru Simülasyonu</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>Three.js ve Streamlit ile Yüksek Detaylı 3D Model Deneyimi</p>", unsafe_allow_html=True)
+
+# Three.js kullanan büyük ve şık HTML arayüzü
 streamlit_html = """
 <!DOCTYPE html>
 <html lang="tr">
@@ -15,23 +45,61 @@ streamlit_html = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { margin: 0; overflow: hidden; background-color: #1a1a1a; }
-        #canvas-container { width: 100%; height: 500px; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #121212; 
+            font-family: Arial, sans-serif;
+        }
+        #canvas-container { 
+            width: 100%; 
+            height: 720px; 
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
         #loading {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
+            color: #00adb5;
+            font-size: 18px;
+            font-weight: bold;
+            background: rgba(18, 18, 18, 0.9);
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 1px solid #00adb5;
             pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0,173,181,0.2);
+            letter-spacing: 1px;
+        }
+        .control-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(18, 18, 18, 0.85);
+            color: #ffffff;
+            padding: 14px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #00adb5;
+            font-size: 13px;
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
-    <div id="loading">Model Yükleniyor...</div>
-    <div id="canvas-container"></div>
+    <div id="loading">Model Yükleniyor, Lütfen Bekleyin...</div>
+    <div id="canvas-container">
+        <div class="control-panel">
+            🖱️ <b>Sol Tık + Sürükle:</b> Modeli Döndür<br>
+            🔍 <b>Fare Tekerleği:</b> Yakınlaş / Uzaklaş<br>
+            ✋ <b>Sağ Tık + Sürükle:</b> Konumu Kaydır
+        </div>
+    </div>
 
     <script type="importmap">
         {
@@ -51,29 +119,35 @@ streamlit_html = """
         const loadingElement = document.getElementById('loading');
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
+        scene.background = new THREE.Color(0x121212);
 
-        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, 2, 5);
+        const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(3, 2, 4);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
         container.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+        // Modern ve Profesyonel Işıklandırma
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
         scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-        directionalLight.position.set(5, 10, 7);
-        scene.add(directionalLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+
+        const blueLight = new THREE.DirectionalLight(0x00adb5, 1.2);
+        blueLight.position.set(-5, -5, -5);
+        scene.add(blueLight);
 
         const loader = new GLTFLoader();
         
-        // Doğrudan rawusercontent linki:
         loader.load(
             'https://raw.githubusercontent.com/RanaEylul/3dmotor/main/car%20engine%203d%20model.glb',
             function (gltf) {
@@ -87,8 +161,8 @@ streamlit_html = """
                 }
             },
             function (error) {
-                console.error('Hata Detayı:', error);
-                loadingElement.innerText = 'Model yüklenemedi! Tarayıcı konsolunu kontrol edin.';
+                console.error('Hata:', error);
+                loadingElement.innerText = 'Model yüklenemedi!';
             }
         );
 
@@ -109,7 +183,5 @@ streamlit_html = """
 </html>
 """
 
-components.html(streamlit_html, height=520)
-
-st.markdown("---")
-st.info("İpucu: Mouse sol tuşu ile modeli döndürebilir, sağ tuş ile kaydırabilir ve tekerlekle yakınlaşabilirsiniz.")
+# Tam ekranı kaplayacak şekilde geniş yükseklikte bileşeni ekrana basıyoruz
+components.html(streamlit_html, height=740)
