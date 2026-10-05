@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Sayfa ayarlarını geniş ekran (wide) yapıyoruz
+# Sayfa ayarlarını geniş ekran yapıyoruz
 st.set_page_config(
     page_title="3D Araba Motoru Görüntüleyici",
     page_icon="🚗",
@@ -9,7 +9,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Özel CSS ile arayüzü şıklaştırıyoruz (Karanlık tema & modern başlıklar)
+# Özel CSS tasarımı
 st.markdown("""
     <style>
         .stApp {
@@ -22,22 +22,21 @@ st.markdown("""
             color: #00adb5;
             text-align: center;
             margin-bottom: 0px;
-            font-size: 2.5rem;
+            font-size: 2.3rem;
         }
         .sub-title {
             text-align: center;
             color: #a3a3a3;
-            margin-bottom: 25px;
-            font-size: 1.1rem;
+            margin-bottom: 20px;
+            font-size: 1rem;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Şık Başlık Alanı
 st.markdown("<h1 class='main-title'>🚗 İnteraktif 3D Araba Motoru Simülasyonu</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-title'>Three.js ve Streamlit ile Yüksek Detaylı 3D Model Deneyimi</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>Model boyutu büyütüldü ve ekrana yakınlaştırıldı.</p>", unsafe_allow_html=True)
 
-# Three.js kullanan büyük ve şık HTML arayüzü
+# Three.js kullanan HTML/JavaScript arayüzü
 streamlit_html = """
 <!DOCTYPE html>
 <html lang="tr">
@@ -74,6 +73,7 @@ streamlit_html = """
             pointer-events: none;
             box-shadow: 0 4px 20px rgba(0,173,181,0.2);
             letter-spacing: 1px;
+            z-index: 10;
         }
         .control-panel {
             position: absolute;
@@ -85,19 +85,56 @@ streamlit_html = """
             border-radius: 8px;
             border-left: 4px solid #00adb5;
             font-size: 13px;
-            pointer-events: none;
             backdrop-filter: blur(6px);
             line-height: 1.5;
+            z-index: 5;
+        }
+        /* Yakınlaşma / Uzaklaşma Butonları */
+        .zoom-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 5;
+        }
+        .zoom-btn {
+            background: rgba(0, 173, 181, 0.8);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .zoom-btn:hover {
+            background: rgba(0, 173, 181, 1);
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
     <div id="loading">Model Yükleniyor, Lütfen Bekleyin...</div>
     <div id="canvas-container">
+        <!-- Bilgilendirme Paneli -->
         <div class="control-panel">
             🖱️ <b>Sol Tık + Sürükle:</b> Modeli Döndür<br>
-            🔍 <b>Fare Tekerleği:</b> Yakınlaş / Uzaklaş<br>
+            🔍 <b>Fare Tekerleği veya Sağdaki Butonlar:</b> Yakınlaş / Uzaklaş<br>
             ✋ <b>Sağ Tık + Sürükle:</b> Konumu Kaydır
+        </div>
+
+        <!-- Ekrana Eklenen Yakınlaştır / Uzaklaştır Butonları -->
+        <div class="zoom-buttons">
+            <button class="zoom-btn" id="btn-in" title="Yakınlaştır">+</button>
+            <button class="zoom-btn" id="btn-out" title="Uzaklaştır">-</button>
         </div>
     </div>
 
@@ -121,21 +158,33 @@ streamlit_html = """
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x121212);
 
-        const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(3, 2, 4);
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        
+        // Kamera modele çok daha yakın konumlandırıldı
+        camera.position.set(0, 1.2, 2.5);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true;
         container.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
 
-        // Modern ve Profesyonel Işıklandırma
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+        // Butonlar ile yakınlaştırma / uzaklaştırma mantığı
+        document.getElementById('btn-in').addEventListener('click', () => {
+            controls.dollyIn(1.2);
+            controls.update();
+        });
+
+        document.getElementById('btn-out').addEventListener('click', () => {
+            controls.dollyOut(1.2);
+            controls.update();
+        });
+
+        // Işıklandırma
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
         scene.add(ambientLight);
 
         const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
@@ -183,5 +232,4 @@ streamlit_html = """
 </html>
 """
 
-# Tam ekranı kaplayacak şekilde geniş yükseklikte bileşeni ekrana basıyoruz
 components.html(streamlit_html, height=740)
