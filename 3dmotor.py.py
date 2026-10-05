@@ -125,7 +125,7 @@ streamlit_html = """
 
         const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
         
-        # Kamerayı modele yakın konumda başlatıyoruz
+        // Kamerayı modele yakın konumda başlatıyoruz (JavaScript yorum satırı düzeltildi)
         camera.position.set(0, 1.2, 2.5);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -138,7 +138,7 @@ streamlit_html = """
         controls.dampingFactor = 0.05;
 
         // --- LAPTOP TRACKPAD VE ZOOM HASSASİYET AYARLARI ---
-        controls.zoomSpeed = 1.2; // Yakınlaşma hızını artırdık
+        controls.zoomSpeed = 1.2;
         controls.screenSpacePanning = true;
 
         // Işıklandırma
