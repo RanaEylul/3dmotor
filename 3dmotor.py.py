@@ -22,9 +22,8 @@ fault_mode = st.sidebar.toggle("Hata Modunu Aç", value=False)
 # onceki: motor.glb  -> simdi: car engine 3d model.glb
 POSSIBLE_NAMES = [
     "car engine 3d model.glb",
-    "car engine 3d model (1).glb",
-    "motor.glb",
-    "model.glb"
+    "car engine 3d model.glb",
+    
 ]
 
 glb_b64 = ""
