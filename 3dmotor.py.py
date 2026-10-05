@@ -18,20 +18,33 @@ st.sidebar.divider()
 st.sidebar.header("🎯 Hata Bulma")
 fault_mode = st.sidebar.toggle("Hata Modunu Aç", value=False)
 
-# GLB dosyası - repo kökünde motor.glb ara
-GLB_FILE = "motor.glb"
-# Eğer yoksa upload iste
+# --- BURASI DEĞİŞTİ: senin dosya adın ---
+# onceki: motor.glb  -> simdi: car engine 3d model.glb
+POSSIBLE_NAMES = [
+    "car engine 3d model.glb",
+    "car engine 3d model (1).glb",
+    "motor.glb",
+    "model.glb"
+]
+
 glb_b64 = ""
-if os.path.exists(GLB_FILE):
-    with open(GLB_FILE, "rb") as f:
-        glb_b64 = base64.b64encode(f.read()).decode()
-else:
-    up = st.sidebar.file_uploader("motor.glb yükle", type=["glb"])
+found_file = None
+for name in POSSIBLE_NAMES:
+    if os.path.exists(name):
+        found_file = name
+        with open(name, "rb") as f:
+            glb_b64 = base64.b64encode(f.read()).decode()
+        break
+
+if not glb_b64:
+    up = st.sidebar.file_uploader("GLB yükle (car engine 3d model.glb)", type=["glb"])
     if up:
+        found_file = up.name
         glb_b64 = base64.b64encode(up.read()).decode()
 
-# --- FIX: f-string icinde uc tirnak catismasini onlemek icin disariyi f''' yaptik ---
-# Icinde hic ''' yok, sadece " var. Bu yuzden patlamaz.
+if found_file:
+    st.sidebar.success(f"Bulundu: {found_file}")
+
 html_template = f'''
 <!DOCTYPE html>
 <html>
@@ -46,7 +59,7 @@ html_template = f'''
 </style>
 </head>
 <body>
-<div id="score">Mod: FAULT</div>
+<div id="score">Yukleniyor...</div>
 <canvas id="c"></canvas>
 <script type="module">
 import * as THREE from 'three';
@@ -95,8 +108,6 @@ function loadFromBase64(b64){{
       model.scale.setScalar(1.6/size);
       model.traverse(o=>{{
         if(o.isMesh){{
-          o.castShadow = true;
-          // BEYAZ SORUNU FIX: orijinal material yerine yeni PBR material
           const isCover = o.position.y > 0.2;
           const col = isCover ? "{cover_color}" : "{engine_color}";
           o.material = new THREE.MeshStandardMaterial({{
@@ -179,4 +190,5 @@ document.getElementById('score').textContent = isFaultMode ? 'HATA BULMA - Kirmi
 components.html(html_template, height=720)
 
 if not glb_b64:
-    st.warning("motor.glb bulunamadi. Repo kokune motor.glb yukle veya sidebar'dan yukle.")
+    st.error("GLB bulunamadi! Repo kokune 'car engine 3d model.glb' adiyla yuklediginden emin ol. Su anki dosyalar:")
+    st.write(os.listdir("."))
