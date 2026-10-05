@@ -73,9 +73,9 @@ streamlit_html = """
 
         const loader = new GLTFLoader();
         
-        // Verdiğin GitHub linki buraya eklendi:
+        // Doğrudan rawusercontent linki:
         loader.load(
-            'https://github.com/RanaEylul/3dmotor/raw/refs/heads/main/car%20engine%203d%20model.glb',
+            'https://raw.githubusercontent.com/RanaEylul/3dmotor/main/car%20engine%203d%20model.glb',
             function (gltf) {
                 scene.add(gltf.scene);
                 loadingElement.style.display = 'none';
@@ -87,8 +87,8 @@ streamlit_html = """
                 }
             },
             function (error) {
-                console.error('Hata:', error);
-                loadingElement.innerText = 'Model yüklenemedi! Linki veya internet bağlantısını kontrol edin.';
+                console.error('Hata Detayı:', error);
+                loadingElement.innerText = 'Model yüklenemedi! Tarayıcı konsolunu kontrol edin.';
             }
         );
 
@@ -109,7 +109,6 @@ streamlit_html = """
 </html>
 """
 
-# HTML kodunu Streamlit bileşeni olarak ekrana basıyoruz
 components.html(streamlit_html, height=520)
 
 st.markdown("---")
