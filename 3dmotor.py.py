@@ -6,24 +6,14 @@ import os
 st.set_page_config(page_title="3D Araba Motoru Simulasyonu", layout="wide")
 
 st.markdown("<h2 style='text-align:center'>🚗 İnteraktif 3D Araba Motoru Simülasyonu</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;opacity:.6'>Laptop trackpad (iki parmak) ve fare tekerleği desteği aktifleştirildi.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;opacity:.6'>Laptop trackpad (iki parmak) ve fare tekerleği desteği aktif.</p>", unsafe_allow_html=True)
 
-# --- SIDEBAR: RENKLENDİRME ---
-st.sidebar.header("🎨 Renklendirme")
-engine_color = st.sidebar.color_picker("Motor Gövde", "#8a8d91")
-cover_color = st.sidebar.color_picker("Kapak Rengi", "#4b5563")
-accent_color = st.sidebar.color_picker("Vurgu / Kayış", "#1f2937")
-
-st.sidebar.divider()
-st.sidebar.header("🎯 Hata Bulma")
-fault_mode = st.sidebar.toggle("Hata Modunu Aç", value=False)
-
-# --- BURASI DEĞİŞTİ: senin dosya adın ---
-# onceki: motor.glb  -> simdi: car engine 3d model.glb
+# Senin dosya adın - bosluklu isimleri de dener
 POSSIBLE_NAMES = [
     "car engine 3d model.glb",
-    "car engine 3d model.glb",
-    
+    "car engine 3d model (1).glb",
+    "motor.glb",
+    "model.glb"
 ]
 
 glb_b64 = ""
@@ -35,15 +25,14 @@ for name in POSSIBLE_NAMES:
             glb_b64 = base64.b64encode(f.read()).decode()
         break
 
-if not glb_b64:
-    up = st.sidebar.file_uploader("GLB yükle (car engine 3d model.glb)", type=["glb"])
+if found_file:
+    st.sidebar.success(f"Yüklü: {found_file}")
+else:
+    up = st.sidebar.file_uploader("GLB yükle", type=["glb"])
     if up:
-        found_file = up.name
         glb_b64 = base64.b64encode(up.read()).decode()
 
-if found_file:
-    st.sidebar.success(f"Bulundu: {found_file}")
-
+# SADECE GORUNTULEME - tabla yok, hata modu yok, acik gri gercekci renk
 html_template = f'''
 <!DOCTYPE html>
 <html>
@@ -53,45 +42,44 @@ html_template = f'''
 </script>
 <style>
   body{{margin:0;overflow:hidden;background:#0a0a0a}}
-  #canvas{{width:100%;height:680px;display:block}}
-  #score{{position:absolute;top:10px;left:10px;color:white;background:rgba(0,0,0,.6);padding:8px 12px;border-radius:8px;font-family:sans-serif;font-size:13px}}
+  #c{{width:100%;height:750px;display:block}}
 </style>
 </head>
 <body>
-<div id="score">Yukleniyor...</div>
 <canvas id="c"></canvas>
 <script type="module">
 import * as THREE from 'three';
 import {{OrbitControls}} from 'three/addons/controls/OrbitControls.js';
 import {{GLTFLoader}} from 'three/addons/loaders/GLTFLoader.js';
 
-const isFaultMode = {str(fault_mode).lower()};
-
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a0a0a);
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth/700, 0.1, 100);
-camera.position.set(2.2,1.2,2.2);
-const renderer = new THREE.WebGLRenderer({{canvas:document.getElementById('c'), antialias:true}});
-renderer.setSize(window.innerWidth, 680);
+scene.background = new THREE.Color(0x0e0e12);
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth/750, 0.1, 100);
+camera.position.set(1.8, 1.0, 1.8);
+
+const renderer = new THREE.WebGLRenderer({{canvas:document.getElementById('c'), antialias:true, alpha:true}});
+renderer.setSize(window.innerWidth, 750);
 renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
+controls.dampingFactor = 0.08;
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.6;
+controls.autoRotateSpeed = 0.5;
+controls.minDistance = 0.8;
+controls.maxDistance = 6;
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-const d1 = new THREE.DirectionalLight(0xffffff, 1.2); d1.position.set(3,5,4); scene.add(d1);
-const d2 = new THREE.DirectionalLight(0xffffff, 0.5); d2.position.set(-3,2,-2); scene.add(d2);
+// ISIKLAR - gercekci gri icin guclu aydinlatma
+scene.add(new THREE.AmbientLight(0xffffff, 1.1));
+const d1 = new THREE.DirectionalLight(0xffffff, 1.5); d1.position.set(4,6,4); d1.castShadow = true; scene.add(d1);
+const d2 = new THREE.DirectionalLight(0xffffff, 0.8); d2.position.set(-4,3,-3); scene.add(d2);
+const d3 = new THREE.DirectionalLight(0xffffff, 0.5); d3.position.set(0,-2,2); scene.add(d3);
 
 const engineGroup = new THREE.Group();
 scene.add(engineGroup);
-const plat = new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,0.08,64), new THREE.MeshStandardMaterial({{color:0x1c1f27}}));
-plat.position.y = -0.8; scene.add(plat);
-
-let modelMeshes = [];
-let faultMeshes = [];
-const FAULT_POS = [[-1.1,0.3,0.2],[0.2,-0.4,0.65],[0.1,0.2,-0.75],[0,0.6,0.3],[0.9,0.6,0.1]];
+// TABLA KALDIRILDI - artik alt taraf tamamen gorunuyor
 
 function loadFromBase64(b64){{
   if(!b64) return;
@@ -104,70 +92,29 @@ function loadFromBase64(b64){{
       const center = box.getCenter(new THREE.Vector3());
       model.position.sub(center);
       const size = box.getSize(new THREE.Vector3()).length();
-      model.scale.setScalar(1.6/size);
+      model.scale.setScalar(1.8/size);
+      
       model.traverse(o=>{{
         if(o.isMesh){{
-          const isCover = o.position.y > 0.2;
-          const col = isCover ? "{cover_color}" : "{engine_color}";
+          // GERCEKCI ACIK GRI MOTOR RENGI - sabit
           o.material = new THREE.MeshStandardMaterial({{
-            color: new THREE.Color(col),
+            color: new THREE.Color(0xd1d5db),
             roughness: 0.45,
-            metalness: 0.25
+            metalness: 0.25,
+            flatShading: false
           }});
-          if(o.name.toLowerCase().includes('belt') || o.name.toLowerCase().includes('pulley')){{
-            o.material.color.set("{accent_color}");
-          }}
-          modelMeshes.push(o);
+          o.castShadow = true;
+          o.receiveShadow = true;
         }}
       }});
       engineGroup.add(model);
-      createFaults();
     }});
   }}catch(e){{ console.error(e); }}
 }}
 
-function createFaults(){{
-  faultMeshes = [];
-  FAULT_POS.forEach((p,i)=>{{
-    const mat = new THREE.MeshBasicMaterial({{color:0xff0000, transparent:true, opacity: isFaultMode ? 0.18 : 0.0}});
-    const sph = new THREE.Mesh(new THREE.SphereGeometry(0.15,16,16), mat);
-    sph.position.set(p[0], p[1], p[2]);
-    sph.userData.fault = i;
-    engineGroup.add(sph);
-    faultMeshes.push(sph);
-    const ringMat = new THREE.MeshBasicMaterial({{color:0x22c55e, side:THREE.DoubleSide, transparent:true, opacity:0}});
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.15,0.22,24), ringMat);
-    ring.position.set(p[0], p[1], p[2]);
-    ring.userData.ring = i;
-    engineGroup.add(ring);
-  }});
-}}
-
-const ray = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-renderer.domElement.addEventListener('click', (e)=>{{
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((e.clientX - rect.left)/rect.width)*2 -1;
-  mouse.y = -((e.clientY - rect.top)/rect.height)*2 +1;
-  ray.setFromCamera(mouse, camera);
-  if(isFaultMode){{
-    const hits = ray.intersectObjects(faultMeshes);
-    if(hits.length>0){{
-      const obj = hits[0].object;
-      obj.material.color.set(0x22c55e);
-      obj.material.opacity = 0.6;
-      const idx = obj.userData.fault;
-      engineGroup.children.forEach(c=>{{ if(c.userData.ring===idx) c.material.opacity=1; }});
-      document.getElementById('score').textContent = 'Bulundu: ' + (idx+1) + ' / 5';
-    }}
-  }}
-}});
-
 function animate(){{
   requestAnimationFrame(animate);
   controls.update();
-  engineGroup.children.forEach(c=>{{ if(c.userData.ring!==undefined && c.material.opacity>0) c.lookAt(camera.position); }});
   renderer.render(scene, camera);
 }}
 animate();
@@ -175,19 +122,17 @@ animate();
 loadFromBase64("{glb_b64}");
 
 window.addEventListener('resize', ()=>{{
-  camera.aspect = window.innerWidth/700;
+  camera.aspect = window.innerWidth/750;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, 680);
+  renderer.setSize(window.innerWidth, 750);
 }});
-
-document.getElementById('score').textContent = isFaultMode ? 'HATA BULMA - Kirmizi alanlara tikla' : 'RENKLENDIRME - Yan menuden renk sec';
 </script>
 </body>
 </html>
 '''
 
-components.html(html_template, height=720)
+components.html(html_template, height=760)
 
 if not glb_b64:
-    st.error("GLB bulunamadi! Repo kokune 'car engine 3d model.glb' adiyla yuklediginden emin ol. Su anki dosyalar:")
-    st.write(os.listdir("."))
+    st.error("GLB bulunamadi! Repo kokune 'car engine 3d model.glb' yukle.")
+    st.write("Mevcut dosyalar:", os.listdir("."))
