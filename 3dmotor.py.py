@@ -10,8 +10,8 @@ st.markdown("<p style='text-align:center;opacity:.6'>Laptop trackpad (iki parmak
 
 # Senin dosya adın - bosluklu isimleri de dener
 POSSIBLE_NAMES = [
-    "car engine 3d model.glb",
-    "car engine 3d model.glb",
+    "motor-v2.glb",
+    "motor-v2.glb",
     
 ]
 
