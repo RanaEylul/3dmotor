@@ -8,7 +8,6 @@ st.title("🚗 3D Araba Motoru Modeli")
 st.write("Streamlit ve Python ile yüklenen GLB 3D model görüntüleyici.")
 
 # Three.js kullanan HTML/JavaScript arayüzü
-# Not: car engine 3d model.glb dosyan GitHub reposunda (genellikle ana dizinde veya static klasöründe) olmalıdır.
 streamlit_html = """
 <!DOCTYPE html>
 <html lang="tr">
@@ -74,9 +73,9 @@ streamlit_html = """
 
         const loader = new GLTFLoader();
         
-        // GitHub'daki GLB dosyanın yolu (Aynı dizindeyse doğrudan adını yazabilirsin)
+        // Verdiğin GitHub linki buraya eklendi:
         loader.load(
-            'car engine 3d model.glb',
+            'https://github.com/RanaEylul/3dmotor/raw/refs/heads/main/car%20engine%203d%20model.glb',
             function (gltf) {
                 scene.add(gltf.scene);
                 loadingElement.style.display = 'none';
@@ -89,7 +88,7 @@ streamlit_html = """
             },
             function (error) {
                 console.error('Hata:', error);
-                loadingElement.innerText = 'Model yüklenemedi! Dosya yolunu kontrol edin.';
+                loadingElement.innerText = 'Model yüklenemedi! Linki veya internet bağlantısını kontrol edin.';
             }
         );
 
