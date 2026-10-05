@@ -117,4 +117,41 @@ scene.add(engineGroup);
 
 function loadFromBase64(b64){{
   if(!b64 || b64.length < 10) return;
- 
+  const bytes = Uint8Array.from(atob(b64), c=>c.charCodeAt(0));
+  const loader = new GLTFLoader();
+  const draco = new DRACOLoader();
+  draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+  loader.setDRACOLoader(draco);
+  loader.parse(bytes.buffer, '', (gltf)=>{{
+    const model = gltf.scene;
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    model.position.y += 0.15;
+    const size = box.getSize(new THREE.Vector3()).length();
+    model.scale.setScalar(1.9/size);
+    model.traverse(o=>{{ if(o.isMesh){{ o.castShadow=true; o.receiveShadow=true; }} }});
+    engineGroup.add(model);
+  }});
+}}
+function animate(){{
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}}
+animate();
+loadFromBase64("{glb_b64}");
+window.addEventListener('resize', ()=>{{
+  camera.aspect = window.innerWidth/(window.innerHeight-95);
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight-95);
+}});
+</script>
+</body>
+</html>
+'''
+
+components.html(html_template, height=800, scrolling=False)
+
+if not found_file:
+    st.error("motor-v2.glb bulunamadi")
